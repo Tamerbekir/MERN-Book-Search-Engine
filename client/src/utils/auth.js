@@ -2,7 +2,7 @@
 import decode from 'jwt-decode';
 
 // create a new class to instantiate for a user
-class AuthService {
+export class AuthService {
   // get user data
   getProfile() {
     return decode(this.getToken());
@@ -46,4 +46,26 @@ class AuthService {
   }
 }
 
-export default new AuthService();
+
+//! Refactoring Auth
+// Adding middleware for Express for authentication and exporting it to the the server.js file
+export const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization || ''
+
+  if (!token) {
+    req.isAuth = false
+    return next()
+  }
+  
+  try {
+    const decodedToken = decode(token)
+    req.isAuth = true
+    req.user = decodedToken
+  } catch (err) {
+    req.isAuth = false
+  }
+  next()
+}
+
+// export { authMiddleware }
+// export default new AuthService();
