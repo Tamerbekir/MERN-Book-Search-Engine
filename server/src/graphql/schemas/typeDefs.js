@@ -8,7 +8,7 @@ const typeDefs = `#graphql
         email: String!
         bookCount: Int
         password: String!
-        savedBooks: [Book]!
+        savedBook: [Book]!
     }
     # Bringing Book along with properties. Authors string in an array where Author will bring back Author of book. Description, bookId, and title are required and cannot be null (!).
     type Book {
@@ -21,14 +21,16 @@ const typeDefs = `#graphql
     }
 
     type Query {
+        # "Service that tells you who the logged in user is (me) as well as that user’s name might look"
+        me: User
         # Bringing in an array of users
         users: [User]
-        # # Bringing in single user by username that is required which then returns a single user
-        # user(username: String!): User
-        # ## Brings in the saved books associated with a single user name that is required from the Book array. The user does not need to have a saved book required, so it can be null
-        # savedBooks(username: String!): [Book]
-        # # Brings in a single book by using the bookID from the Book object / type. It brings in all of the Book object data (author, image, link etc)
-        # book(bookId: ID!): Book
+        # Bringing in single user by username that is required which then returns a single user
+        users(username: String!): User
+        ## Brings in the saved books associated with a single user name that is required from the Book array. The user does not need to have a saved book required, so it can be null
+        savedBooks(username: String!): [Book]
+        # Brings in a single book by using the bookID from the Book object / type. It brings in all of the Book object data (author, image, link etc)
+        savedBook(bookId: ID!): Book
     }
 
     # Adding inputs to help make mutations cleaner
