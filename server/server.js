@@ -1,72 +1,41 @@
-//! Using RESTful API
-// const express = require('express');
-// const path = require('path');
-// const db = require('./config/connection');
-// const routes = require('./routes');
+require("dotenv").config();
+const express = require("express");
 
-// const app = express();
-// const PORT = process.env.PORT || 3001;
+const path = require("path");
 
-// app.use(express.urlencoded({ extended: true }));
-// app.use(express.json());
+const { ApolloServer } = require("apollo-server-express");
+const { authMiddleware } = require("./utils/auth");
+const { typeDefs, resolvers } = require("./schemas");
 
-// // if we're in production, serve client/build as static assets
-// if (process.env.NODE_ENV === 'production') {
-//   app.use(express.static(path.join(__dirname, '../client/build')));
-// }
+const db = require("./config/connection");
 
-// app.use(routes);
-
-// db.once('open', () => {
-//   app.listen(PORT, () => console.log(`🌍 Now listening on localhost:${PORT}`));
-// });
-
-//! Refactoring Server using Apollo Server
-// Bringing in boiler plate Apollo server and Middle middleware
-const express = require('express');
-const { ApolloServer } = require('@apollo/server');
-const { expressMiddleware } = require('@apollo/server/express4');
-
-//Bringing in typeDefs and Resolvers from schemas folder
-const { typeDefs, resolvers } = require('./schemas');
-
-// Bringing in database via connection via config folder
-const db = require('./config/connection');
-const path = require('path');
-const PORT = process.env.PORT || 3001;
 const app = express();
 
-// New server using typeDefs and resolvers
+const PORT = process.env.PORT || 3001;
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: authMiddleware,
 });
 
-const startApolloServer = async () => {
-  await server.start();
+server.applyMiddleware({ app });
 
-  app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
-  app.use('/graphql', expressMiddleware(server, {
-    context: async ({ req }) => ({
-      // Future properties here
-    })
-  }));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../client/build")));
+}
 
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-    });
-  }
 
-  db.once('open', () => {
-    app.listen(PORT, () => {
-      console.log(`API server running on port ${PORT}!`);
-      console.log(`Use GraphQL at http://localhost:${PORT}/graphql`);
-    });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/build/index.html"));
+});
+
+db.once("open", () => {
+  app.listen(PORT, () => {
+    console.log(`🌍 Now listening on localhost:${PORT}`);
+    console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
   });
-};
-
-startApolloServer();
+});
